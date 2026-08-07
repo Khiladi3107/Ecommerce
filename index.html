@@ -855,6 +855,16 @@ section { padding: 40px 0; }
 .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
 .page-btn.active { background: var(--primary); color: var(--white); border-color: var(--primary); }
 .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.page-ellipsis {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    font-weight: 600;
+    user-select: none;
+}
 
 .features-grid {
   display: grid;
@@ -2459,19 +2469,39 @@ function renderProducts() {
   grid.innerHTML = paginatedItems.map(p => productCardHTML(p)).join('');
   renderPagination(totalPages);
 }
+
 function renderPagination(totalPages) {
-  const container = document.getElementById('paginationControls');
-  if (totalPages <= 1) {
-    container.innerHTML = '';
-    return;
-  }
-  let html = '';
-  html += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
-  for (let i = 1; i <= totalPages; i++) {
-    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
-  }
-  html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
-  container.innerHTML = html;
+    const container = document.getElementById('paginationControls');
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    html += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+
+    // Build smart page list: 1 ... 4 5 6 ... 26
+    const delta = 1; // pages shown on each side of current page
+    const pages = [];
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+        pages.push(i);
+    }
+    if (currentPage - delta > 2) pages.unshift('...');
+    if (currentPage + delta < totalPages - 1) pages.push('...');
+    pages.unshift(1);
+    pages.push(totalPages);
+
+    pages.forEach(p => {
+        if (p === '...') {
+            html += `<span class="page-ellipsis">…</span>`;
+        } else {
+            html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="changePage(${p})">${p}</button>`;
+        }
+    });
+
+    html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+    container.innerHTML = html;
 }
 function changePage(page) {
   const filtered = currentCategory === 'all' ? products : products.filter(p => p.category === currentCategory);
